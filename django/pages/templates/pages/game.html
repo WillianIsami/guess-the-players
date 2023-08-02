@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jogo de Adivinhação</title>
+</head>
+<body>
+    <h1>Jogo da advinhação</h1>
+    <p>Acerte o nome do jogador através das dicas de posição, time e nacionalidade do jogador.</p>
+    <p>Você tem 5 chances para acertar os 5 jogadores e ficar no pódio!</p>
+
+    {% if correct is not defined %}
+    <form method="post">
+        {% csrf_token %}
+        <label for="user_name">Qual o seu nome?</label>
+        <input type="text" id="user_name" name="user_name" required>
+        <label for="player_name">Qual o nome e sobrenome do jogador de futebol?</label>
+        <select id="player_name" name="player_name" required>
+            <option value="" selected disabled>Escolha um jogador</option>
+            {% for player in players %}
+                <option value="{{ player.name }}">{{ player.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Enviar</button>
+    </form>
+    {% else %}
+        {% if correct %}
+            <p>Parabéns você acertou o jogador!</p>
+        {% else %}
+            <p>Você errou! Quer receber +1 dica? (-1 ponto).</p>
+        {% endif %}
+        <p>Sua pontuação atual: {{ user_profile.pontuation }}</p>
+    {% endif %}
+</body>
+</html>
