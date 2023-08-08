@@ -10,7 +10,7 @@ class GameGUI:
         self.create_table()
         self.root = root
         self.root.title("Jogo da Advinhação")
-        self.root.geometry("400x300")
+        self.root.geometry("600x400")
         self.user_label = tk.Label(root, text="Qual o seu nome?")
         self.user_label.pack()
         self.user_entry = tk.Entry(root)
@@ -20,6 +20,7 @@ class GameGUI:
         self.pontuation = 0
         self.counter = 0
         self.flag = 0
+        self.tip_keys = []
         self.show_tips(True)
 
     def start_game(self):
@@ -46,8 +47,8 @@ class GameGUI:
         tips = {
             "age:":age,
             "birth_day:":birth_day,
-            "height:":height,
-            "weight:":weight,
+            "height (cm):":height,
+            "weight (kg):":weight,
             "nationality:":nationality,
             "team:":team,
             "league_name:":league_name,
@@ -56,9 +57,22 @@ class GameGUI:
             "positions:":positions,
             "preferred_foot:":preferred_foot
         }
-        tip_one, tip_two = random.choice(list(tips.items()))
-        if show_tip:
-            tip_label = tk.Label(self.root, text=f"{tip_one} - {tip_two}")
+        print("tip keys:", self.tip_keys)
+        if len(self.tip_keys):
+            for delete in self.tip_keys:
+                del tips[delete]
+        if not len(tips):
+            self.flag += 1
+            if self.flag == 1: 
+                tip_label = tk.Label(self.root, text=f"Tips over")
+                tip_label.pack()
+                self.wrong_answer_tip.config(state=tk.DISABLED)
+                self.verify_guess(True)
+        if show_tip and len(tips):
+            tip_key, tip_value = random.choice(list(tips.items()))
+            self.tip_keys.append(tip_key)
+            self.pontuation -= 1
+            tip_label = tk.Label(self.root, text=f"{tip_key} - {tip_value}")
             tip_label.pack()
         return short_name, long_name
 
@@ -70,9 +84,11 @@ class GameGUI:
         self.guess_button = tk.Button(self.root, text="Enviar", command=self.verify_guess)
         self.guess_button.pack()
     
-    def verify_guess(self):
+    def verify_guess(self, tips_over = False):
         guess = self.guess_entry.get()
-        short_name, long_name = self.show_tips()
+        short_name, long_name = "game", "over"
+        if not tips_over: 
+            short_name, long_name = self.show_tips()
         print(f"{guess.lower()} - {short_name.lower()} - {long_name.lower()}\n")
         if (guess.lower() == short_name.lower()) or (guess.lower() == long_name.lower()):
             messagebox.showinfo("Parabéns", "Você acertou o jogador!")
@@ -81,27 +97,23 @@ class GameGUI:
             self.guess_label.pack_forget()
             self.guess_button.pack_forget()
             self.wrong_answer_label.pack_forget()
-            self.wrong_answer_entry.pack_forget()
             self.wrong_answer_tip.pack_forget()
             messagebox.showinfo("Game Over", f"Sua pontuação final: {self.pontuation} pontos")
-            self.root.after(5000, self.close_app)
+            self.root.after(1000, self.root.destroy())
         else:
             self.counter += 1
             if self.counter > 5:
                 messagebox.showinfo("Fim de Jogo", f"O jogador era {short_name}. Acabou as suas tentativas. {self.user}, você ficou com {self.pontuation} pontos.")
                 self.wrong_answer_label.pack_forget()
                 self.wrong_answer_tip.pack_forget()
-                self.root.after(5000, self.close_app)
-            self.flag += 1
-            if self.flag == 1:
+                self.root.after(1000, self.root.destroy())
+            if not tips_over and self.counter == 1:
+                self.pontuation -= 1
                 self.wrong_answer_label = tk.Label(self.root, text="Você errou! Quer receber +1 dica? (-1 ponto).")
                 self.wrong_answer_label.pack()
                 self.wrong_answer_tip = tk.Button(self.root, text="Receber +1 dica", command=lambda: self.show_tips
                 (False, True))
                 self.wrong_answer_tip.pack()
-
-    def close_app(self):
-        self.root.destroy()
 
     def create_table(self):
         with self.db_connection:
